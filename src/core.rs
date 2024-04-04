@@ -6,7 +6,41 @@ use std::{
 
 use crate::byte;
 
+/// An object representing a GOB archive in memory.
+/// 
+/// Instances of `Gob` hold a [`Vec`] of [`File`], which represent
+/// the individual files contained within the archive.
+/// 
+/// # Examples
+/// 
+/// Creates a new object from parsing a GOB file at a given [`PathBuf`]:
+/// 
+/// ```
+/// use std::path::PathBuf;
+/// use gob_rs::core::Gob;
+/// 
+/// let gob = Gob::from(PathBuf::from("/path/to/gob.GOB"));
+/// ```
+/// 
+/// Creates a new object from parsing a directory, structured like
+/// a GOB archive, at a given [`PathBuf`]:
+/// 
+/// ```
+/// use gob_rs::core::Gob;
+/// 
+/// let gob = Gob::from(PathBuf::from("/path/to/gob/"));
+/// ```
+/// 
+/// Gets the file count of the archive:
+/// 
+/// ```
+/// let file_count = gob.files.len();
+/// ```
+/// 
+/// 
 pub struct Gob {
+    /// A [`Vec`] of [`File`], representing the files contained within
+    /// the archive object.
     pub files: Vec<File>,
 }
 
@@ -161,8 +195,31 @@ struct FileDefinition {
     filepath: PathBuf,
 }
 
+/// An object representing a file within a [`Gob`] archive.
+///
+/// # Examples
+/// 
+/// Creating a file:
+/// 
+/// ```
+/// use gob_rs::core::File;
+/// 
+/// let file = File::new(
+///     "GOB".as_bytes().to_vec(),
+///     PathBuf::from("foo/bar")
+/// );
+/// ```
+///  
+/// # Limitations
+///
+/// Due to some strict memory definitions in the structure of
+/// GOB archives, filepaths may at most be 128 ASCII characters
+/// (or 128 bytes) long.
 pub struct File {
+    /// The bytes of the file.
     pub data: Vec<u8>,
+
+    /// The relative filepath of the file within the archive.
     pub filepath: PathBuf,
 }
 

@@ -53,3 +53,13 @@ File {
     filepath: 128 bytes, // path of file within archive
 }
 ```
+
+### Limitations
+
+One major limitation that arises due to the strict memory definitions of the file format is that the relative paths of files within a GOB archive may only be 128 ASCII characters (or 128 bytes) long.
+
+Another limitation is that due to the 32-Bit architecture of the format, GOB archives can at most reach a size of about 4 GB before breaking due to being unable to reference data offset past the 32-Bit limit.
+
+## License
+
+This library is dual-licensed under the [MIT license](LICENSE-MIT) and [Apache License, Version 2.0](LICENSE-APACHE).
