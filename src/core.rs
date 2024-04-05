@@ -1,6 +1,6 @@
 use std::{
     fs,
-    io::{Read, Seek, SeekFrom},
+    io::{Error, ErrorKind, Read, Seek, SeekFrom},
     path::{Path, PathBuf},
 };
 
@@ -13,22 +13,23 @@ use crate::byte;
 /// 
 /// # Examples
 /// 
-/// Creates a new object from parsing a GOB file at a given [`PathBuf`]:
+/// Creates a new object from parsing a GOB file at a given [`Path`]:
 /// 
 /// ```
-/// use std::path::PathBuf;
+/// use std::path::Path;
 /// use gob_rs::core::Gob;
 /// 
-/// let gob = Gob::from(PathBuf::from("/path/to/gob.GOB"));
+/// let gob = Gob::from_file(Path::new("/path/to/gob.GOB"));
 /// ```
 /// 
 /// Creates a new object from parsing a directory, structured like
-/// a GOB archive, at a given [`PathBuf`]:
+/// a GOB archive, at a given [`Path`]:
 /// 
 /// ```
+/// use std::path::Path;
 /// use gob_rs::core::Gob;
 /// 
-/// let gob = Gob::from(PathBuf::from("/path/to/gob/"));
+/// let gob = Gob::from_directory(Path::new("/path/to/gob"));
 /// ```
 /// 
 /// Gets the file count of the archive:
@@ -55,10 +56,15 @@ impl Gob {
 
             let path = item.path();
 
-            let root = root.unwrap_or(
-                path.parent()
-                    .expect("Should be able to get parent directory"),
-            );
+            let root = match root {
+                Some(root) => root,
+                None => match path.parent() {
+                    Some(root) => root,
+                    None => {
+                        return Err(Error::new(ErrorKind::Other, "Unable to get parent directory from path."));
+                    }
+                }
+            };
 
             if path.is_file() {
                 let mut file = fs::File::open(&path)?;
@@ -72,7 +78,7 @@ impl Gob {
                     .expect("Should be able to get relative path")
                     .into();
 
-                let file = File::new(data, filepath);
+                let file = File::new(data, filepath)?;
 
                 files.push(file);
             } else if path.is_dir() {
@@ -80,43 +86,51 @@ impl Gob {
 
                 Self::get_files_from_directory(files, &mut directory, Some(root))?;
             } else {
-                panic!("Path is neither file nor directory: {}", path.display());
+                return Err(Error::new(ErrorKind::InvalidInput, "Path is neither file nor directory."));
             }
         }
 
         Ok(())
     }
 
-    fn from_directory(directory: &mut fs::ReadDir) -> Self {
+    pub fn from_directory(path: &Path) -> std::io::Result<Self> {
+        if !path.is_dir() {
+            return Err(Error::new(ErrorKind::InvalidInput, "Path is not a directory."));
+        }
+
+        let mut directory = fs::read_dir(path)?;
+        
         let mut files: Vec<File> = Vec::new();
 
-        Self::get_files_from_directory(&mut files, directory, None)
-            .expect("Should be able to get files from directory");
+        Self::get_files_from_directory(&mut files, &mut directory, None)?;
 
-        Self { files }
+        Ok(Self { files })
     }
 
-    fn from_file(file: &mut fs::File) -> Self {
-        file.seek(SeekFrom::Start(0))
-            .expect("Should be able to seek to start.");
+    pub fn from_file(path: &Path) -> std::io::Result<Self> {
+        if !path.is_file() {
+            return Err(Error::new(ErrorKind::InvalidInput, "Path is not a file."));
+        }
+
+        let mut file = fs::File::open(path)?;
+
+        file.seek(SeekFrom::Start(0))?;
 
         let signature = &byte::slice!(file, 4);
 
         if signature != b"GOB " {
-            panic!("Bad signature in header of gob file.");
+            return Err(Error::new(ErrorKind::InvalidData, "Bad signature in header of GOB file."));
         }
 
         let version = u32::from_le_bytes(byte::slice!(file, 4));
 
         if version != 0x14 {
-            panic!("Bad version {version} for gob file.");
+            return Err(Error::new(ErrorKind::InvalidData, "Bad version in header of GOB file."));
         }
 
         let body_offset = u32::from_le_bytes(byte::slice!(file, 4)) as u64;
 
-        file.seek(SeekFrom::Start(body_offset)).expect(&format!(
-            "Should be able to seek to body offset ({body_offset})."
-        ));
+        file.seek(SeekFrom::Start(body_offset))?;
 
         let file_count = u32::from_le_bytes(byte::slice!(file, 4));
 
@@ -127,8 +141,15 @@ impl Gob {
 
             let size = u32::from_le_bytes(byte::slice!(file, 4)) as usize;
 
+            let filepath = match byte::string_from_bytes(&byte::slice!(file, 128)) {
+                Ok(filepath) => filepath,
+                Err(_) => {
+                    return Err(Error::new(ErrorKind::InvalidData, "Bad string encoding."));
+                }
+            };
+
             let filepath = PathBuf::from(
-                byte::string_from_bytes(&byte::slice!(file, 128)).trim_matches(char::from(0)),
+                filepath.trim_matches(char::from(0))
             );
 
             file_definitions.push(FileDefinition {
@@ -141,51 +162,18 @@ impl Gob {
         let mut files: Vec<File> = Vec::new();
 
         for file_definition in file_definitions {
-            file.seek(SeekFrom::Start(file_definition.offset as u64))
-                .expect(&format!(
-                    "Should be able to seek to file offset ({}).",
-                    file_definition.offset
-                ));
+            file.seek(SeekFrom::Start(file_definition.offset as u64))?;
 
             let mut data: Vec<u8> = vec![0; file_definition.size];
 
-            file.read_exact(&mut data)
-                .expect("Should be able to read file data.");
+            file.read_exact(&mut data)?;
 
-            let file = File::new(data, file_definition.filepath);
+            let file = File::new(data, file_definition.filepath)?;
 
             files.push(file);
         }
 
-        Self { files }
-    }
-}
-
-impl From<&mut fs::File> for Gob {
-    fn from(file: &mut fs::File) -> Self {
-        Self::from_file(file)
-    }
-}
-
-impl From<&mut fs::ReadDir> for Gob {
-    fn from(directory: &mut fs::ReadDir) -> Self {
-        Self::from_directory(directory)
-    }
-}
-
-impl From<PathBuf> for Gob {
-    fn from(path: PathBuf) -> Self {
-        if path.is_file() {
-            let mut file = fs::File::open(path).expect("Should be able to open file.");
-
-            Self::from_file(&mut file)
-        } else if path.is_dir() {
-            let mut directory = fs::read_dir(path).expect("Should be able to read directory.");
-
-            Self::from_directory(&mut directory)
-        } else {
-            panic!("Path is neither file nor directory: {}", path.display());
-        }
+        Ok(Self { files })
     }
 }
 
@@ -224,11 +212,11 @@ pub struct File {
 }
 
 impl File {
-    pub fn new(data: Vec<u8>, filepath: PathBuf) -> Self {
+    pub fn new(data: Vec<u8>, filepath: PathBuf) -> std::io::Result<Self> {
         if filepath.as_os_str().as_encoded_bytes().len() > 128 {
-            panic!("File path is longer than 128 bytes: {}", filepath.display());
+            return Err(Error::new(ErrorKind::InvalidInput, "File path is longer than 128 bytes."));
         }
 
-        Self { data, filepath }
+        Ok(Self { data, filepath })
     }
 }
