@@ -7,18 +7,19 @@ A Rust library for parsing and constructing archives of the LucasArts GOB format
 ### Parsing GOB file
 
 ```rs
-use std::path::PathBuf;
+use std::path::Path;
 use gob_rs::core::Gob;
 
-let gob = Gob::from(PathBuf::from("/path/to/gob.GOB"));
+let gob = Gob::from_file(Path::new("/path/to/gob.GOB"));
 ```
 
 ### Parsing GOB-like directory
 
 ```rs
+use std::path::Path;
 use gob_rs::core::Gob;
 
-let gob = Gob::from(PathBuf::from("/path/to/gob/"));
+let gob = Gob::from_directory(Path::new("/path/to/gob/"));
 ```
 
 ## Specification
@@ -56,7 +57,7 @@ File {
 
 ### Limitations
 
-One major limitation that arises due to the strict memory definitions of the file format is that the relative paths of files within a GOB archive may only be 128 ASCII characters (or 128 bytes) long.
+One major limitation that arises due to the strict memory definitions of the file format is that the relative paths of files within a GOB archive may at most be 128 ASCII characters (or 128 bytes) long.
 
 Another limitation is that due to the 32-Bit architecture of the format, GOB archives can at most reach a size of about 4 GB before breaking due to being unable to reference data offset past the 32-Bit limit.
 
