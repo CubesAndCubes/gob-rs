@@ -2,6 +2,11 @@
 
 A Rust library for parsing and constructing archives of the LucasArts GOB format.
 
+This implementation has been tested to work with GOB files of:
+
+- Indiana Jones and the Infernal Machine
+- Star Wars Jedi Knight: Dark Forces II
+
 ## Examples
 
 ### Parsing GOB File
@@ -30,12 +35,6 @@ fn main() -> std::io::Result<()> {
 
     Ok(())
 }
-```
-
-### Getting The File Count
-
-```rs
-let file_count = gob.files.len();
 ```
 
 ## Specification
