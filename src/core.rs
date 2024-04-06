@@ -213,6 +213,24 @@ impl Gob {
 
         Ok(Self { files })
     }
+
+    /// Creates a new [`Gob`] object. May be given a [`GobMap`] to
+    /// define structure from.
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use gob_rs::core::Gob;
+    /// 
+    /// let gob = Gob::new();
+    /// ```
+    pub fn new(files: Option<GobMap>) -> Self {
+        let files = files.unwrap_or(GobMap::new());
+
+        Self {
+            files,
+        }
+    }
 }
 
 struct FileDefinition {
