@@ -1,21 +1,19 @@
 //! Core module of the library
 
 use std::{
-    fs,
-    io::{Error, ErrorKind, Read, Seek, SeekFrom},
-    path::{Path, PathBuf},
+    collections::HashMap, fs, io::{Error, ErrorKind, Read, Seek, SeekFrom}, path::{Path, PathBuf}
 };
 
 use crate::byte;
 
-/// An object representing a GOB archive in memory.
+/// An object representing a GOB archive.
 /// 
-/// Instances of `Gob` hold a [`Vec`] of [`File`], which represent
-/// the individual files contained within the archive.
+/// Instances of `Gob` hold a [`GobMap`], representing
+/// the structure of the archive.
 /// 
 /// # Examples
 /// 
-/// Creates a new object from parsing a GOB file at a given [`Path`]:
+/// Creates a new object from parsing a GOB archive file at a given [`Path`]:
 /// 
 /// ```no_run
 /// use std::path::Path;
@@ -56,17 +54,14 @@ use crate::byte;
 ///     Ok(())
 /// }
 /// ```
-/// 
-/// 
 pub struct Gob {
-    /// A [`Vec`] of [`File`], representing the files contained within
-    /// the archive object.
-    pub files: Vec<File>,
+    /// A [`GobMap`], representing the structure of the archive.
+    pub files: GobMap,
 }
 
 impl Gob {
     fn get_files_from_directory(
-        files: &mut Vec<File>,
+        files: &mut GobMap,
         directory: &mut fs::ReadDir,
         root: Option<&Path>,
     ) -> std::io::Result<()> {
@@ -97,9 +92,7 @@ impl Gob {
                     .expect("Should be able to get relative path")
                     .into();
 
-                let file = File::new(data, filepath)?;
-
-                files.push(file);
+                files.insert(filepath, data);
             } else if path.is_dir() {
                 let mut directory = path.read_dir()?;
 
@@ -133,7 +126,7 @@ impl Gob {
 
         let mut directory = fs::read_dir(path)?;
         
-        let mut files: Vec<File> = Vec::new();
+        let mut files = GobMap::new();
 
         Self::get_files_from_directory(&mut files, &mut directory, None)?;
 
@@ -206,7 +199,7 @@ impl Gob {
             });
         }
 
-        let mut files: Vec<File> = Vec::new();
+        let mut files = GobMap::new();
 
         for file_definition in file_definitions {
             file.seek(SeekFrom::Start(file_definition.offset as u64))?;
@@ -215,9 +208,7 @@ impl Gob {
 
             file.read_exact(&mut data)?;
 
-            let file = File::new(data, file_definition.filepath)?;
-
-            files.push(file);
+            files.insert(file_definition.filepath, data);
         }
 
         Ok(Self { files })
@@ -230,74 +221,6 @@ struct FileDefinition {
     filepath: PathBuf,
 }
 
-/// An object representing a file within a [`Gob`] archive.
-///
-/// # Examples
-/// 
-/// Creating a GOB archive file:
-/// 
-/// ```
-/// use std::path::PathBuf; 
-/// use gob_rs::core::File;
-/// 
-/// fn main() -> std::io::Result<()> {
-///     let archive_file = File::new(
-///         b"GOB".to_vec(),
-///         PathBuf::from("foo.bar")
-///     )?;
-/// 
-///     assert_eq!(archive_file.data, b"GOB");
-///     assert_eq!(archive_file.filepath, PathBuf::from("foo.bar"));
-/// 
-///     Ok(())
-/// }
-/// ```
-/// 
-/// Creating a GOB archive file from a real file:
-/// 
-/// ```no_run
-/// use std::io::Read;
-/// use std::path::PathBuf; 
-/// use gob_rs::core::File;
-/// 
-/// fn main() -> std::io::Result<()> {
-///     let mut real_file = std::fs::File::open("/path/to/file")?;
-///
-///     let mut data: Vec<u8> = Vec::new();
-/// 
-///     real_file.read_to_end(&mut data)?;
-/// 
-///     let archive_file = File::new(
-///         data,
-///         PathBuf::from("foo.bar"),
-///     )?;
-/// 
-///     Ok(())
-/// }
-/// ```
-///  
-/// # Limitations
-///
-/// Due to some strict memory definitions in the structure of
-/// GOB archives, filepaths may at most be 128 ASCII characters
-/// (or 128 bytes) long.
-pub struct File {
-    /// The bytes of the file.
-    pub data: Vec<u8>,
-
-    /// The relative path of the file within the archive.
-    pub filepath: PathBuf,
-}
-
-impl File {
-    /// Creates a new [`File`] object from a given [`Vec`] of [`u8`] (bytes)
-    /// and a given [`PathBuf`], representing the relative path to the file
-    /// within the archive.
-    pub fn new(data: Vec<u8>, filepath: PathBuf) -> std::io::Result<Self> {
-        if filepath.as_os_str().as_encoded_bytes().len() > 128 {
-            return Err(Error::new(ErrorKind::InvalidInput, "File path is longer than 128 bytes."));
-        }
-
-        Ok(Self { data, filepath })
-    }
-}
+/// A [`HashMap`] keyed by [`PathBuf`] containing [`Vec`] of [`u8`] (bytes),
+/// representing the structure of a GOB archive.
+pub type GobMap = HashMap<PathBuf, Vec<u8>>;
