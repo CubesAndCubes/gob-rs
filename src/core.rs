@@ -263,6 +263,15 @@ impl Gob {
     }
 }
 
+impl From<GobMap> for Gob {
+    fn from(files: GobMap) -> Self {
+        Self {
+            files
+        }
+    }
+}
+
+
 struct FileDefinition {
     offset: usize,
     size: usize,
