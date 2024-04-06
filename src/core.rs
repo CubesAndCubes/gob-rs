@@ -241,4 +241,24 @@ struct FileDefinition {
 
 /// A [`HashMap`] keyed by [`PathBuf`] containing [`Vec`] of [`u8`] (bytes),
 /// representing the structure of a GOB archive.
+/// 
+/// # Examples
+/// 
+/// Creating object and inserting file:
+/// ```
+/// use std::path::PathBuf;
+/// use gob_rs::core::GobMap;
+/// 
+/// let mut files = GobMap::new();
+/// 
+/// files.insert(
+///     PathBuf::from("foo.bar"),
+///     b"fizzbuzz".to_vec(),
+/// );
+/// 
+/// assert_eq!(
+///     files.get(&PathBuf::from("foo.bar")),
+///     Some(&b"fizzbuzz".to_vec()),
+/// );
+/// ```
 pub type GobMap = HashMap<PathBuf, Vec<u8>>;
