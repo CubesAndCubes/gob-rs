@@ -19,7 +19,7 @@ use crate::byte;
 /// use std::path::Path;
 /// use gob_rs::core::Gob;
 /// 
-/// let gob = Gob::from_file(Path::new("/path/to/gob.GOB"));
+/// let gob = Gob::from_file(Path::new("/path/to/gob.GOB"))?;
 /// ```
 /// 
 /// Creates a new object from parsing a directory, structured like
@@ -29,7 +29,7 @@ use crate::byte;
 /// use std::path::Path;
 /// use gob_rs::core::Gob;
 /// 
-/// let gob = Gob::from_directory(Path::new("/path/to/gob"));
+/// let gob = Gob::from_directory(Path::new("/path/to/gob"))?;
 /// ```
 /// 
 /// Gets the file count of the archive:
@@ -187,15 +187,34 @@ struct FileDefinition {
 ///
 /// # Examples
 /// 
-/// Creating a file:
+/// Creating a GOB archive file:
 /// 
 /// ```
+/// use std::path::PathBuf; 
 /// use gob_rs::core::File;
 /// 
-/// let file = File::new(
+/// let archive_file = File::new(
 ///     "GOB".as_bytes().to_vec(),
-///     PathBuf::from("foo/bar")
-/// );
+///     PathBuf::from("foo.bar")
+/// )?;
+/// ```
+/// 
+/// Creating a GOB archive file from a real file:
+/// 
+/// ```
+/// use std::path::PathBuf; 
+/// use gob_rs::core::File;
+/// 
+/// let mut real_file = fs::File::open(&path)?;
+/// 
+/// let mut data: Vec<u8> = Vec::new();
+/// 
+/// real_file.read_to_end(&mut data)?;
+/// 
+/// let archive_file = File::new(
+///     data,
+///     PathBuf::from("foo.bar"),
+/// )?;
 /// ```
 ///  
 /// # Limitations
@@ -207,7 +226,7 @@ pub struct File {
     /// The bytes of the file.
     pub data: Vec<u8>,
 
-    /// The relative filepath of the file within the archive.
+    /// The relative path of the file within the archive.
     pub filepath: PathBuf,
 }
 
