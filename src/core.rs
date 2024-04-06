@@ -62,6 +62,29 @@ use crate::byte;
 /// 
 /// assert_eq!(file_count, 2);
 /// ```
+/// 
+/// Iterates over the archive:
+/// 
+/// ```
+/// use std::path::PathBuf;
+/// use gob_rs::core::Gob;
+/// 
+/// let mut gob = Gob::new();
+/// 
+/// gob.files.insert(
+///     PathBuf::from("foo.bar"),
+///     b"foobar".to_vec(),
+/// );
+/// 
+/// gob.files.insert(
+///     PathBuf::from("fizz.buzz"),
+///     b"fizzbuzz".to_vec(),
+/// );
+/// 
+/// for (filepath, data) in &gob.files {
+///     println!("path: {} data: {:?}", filepath.display(), data);
+/// }
+/// ```
 pub struct Gob {
     /// A [`GobMap`], representing the structure of the archive.
     pub files: GobMap,

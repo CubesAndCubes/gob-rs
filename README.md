@@ -32,12 +32,6 @@ fn main() -> std::io::Result<()> {
 }
 ```
 
-### Getting The File Count
-
-```rs
-let file_count = gob.files.len();
-```
-
 ## Specification
 
 GOB files are used by LucasArts games built on the Sith engine as an archive format for storing game files.
