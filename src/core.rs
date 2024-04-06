@@ -93,6 +93,16 @@ impl Gob {
         Ok(())
     }
 
+    /// Creates a new [`Gob`] object from a given [`Path`] to a directory,
+    /// structured like a GOB archive.
+    /// 
+    /// # Examples
+    /// ```
+    /// use std::path::Path;
+    /// use gob_rs::core::Gob;
+    /// 
+    /// let gob = Gob::from_directory(Path::new("/path/to/gob"))?;
+    /// ```
     pub fn from_directory(path: &Path) -> std::io::Result<Self> {
         if !path.is_dir() {
             return Err(Error::new(ErrorKind::InvalidInput, "Path is not a directory."));
@@ -107,6 +117,16 @@ impl Gob {
         Ok(Self { files })
     }
 
+    /// Creates a new [`Gob`] object from a given [`Path`] to a GOB archive file.
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use std::path::Path;
+    /// use gob_rs::core::Gob;
+    /// 
+    /// let gob = Gob::from_file(Path::new("/path/to/gob.GOB"))?;
+    /// ```
     pub fn from_file(path: &Path) -> std::io::Result<Self> {
         if !path.is_file() {
             return Err(Error::new(ErrorKind::InvalidInput, "Path is not a file."));
@@ -231,6 +251,7 @@ pub struct File {
 }
 
 impl File {
+    /// Creates a new [`File`] object from a given [`Vec`] of [`u8`] (bytes)
     pub fn new(data: Vec<u8>, filepath: PathBuf) -> std::io::Result<Self> {
         if filepath.as_os_str().as_encoded_bytes().len() > 128 {
             return Err(Error::new(ErrorKind::InvalidInput, "File path is longer than 128 bytes."));
