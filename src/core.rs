@@ -42,17 +42,25 @@ use crate::byte;
 /// 
 /// Gets the file count of the archive:
 /// 
-/// ```no_run
-/// use std::path::Path;
+/// ```
+/// use std::path::PathBuf;
 /// use gob_rs::core::Gob;
 /// 
-/// fn main() -> std::io::Result<()> {
-///     let gob = Gob::from_file(Path::new("/path/to/gob.GOB"))?;
+/// let mut gob = Gob::new();
 /// 
-///     let file_count = gob.files.len();
+/// gob.files.insert(
+///     PathBuf::from("foo.bar"),
+///     b"foobar".to_vec(),
+/// );
 /// 
-///     Ok(())
-/// }
+/// gob.files.insert(
+///     PathBuf::from("fizz.buzz"),
+///     b"fizzbuzz".to_vec(),
+/// );
+/// 
+/// let file_count = gob.files.len();
+/// 
+/// assert_eq!(file_count, 2);
 /// ```
 pub struct Gob {
     /// A [`GobMap`], representing the structure of the archive.
@@ -214,8 +222,7 @@ impl Gob {
         Ok(Self { files })
     }
 
-    /// Creates a new [`Gob`] object. May be given a [`GobMap`] to
-    /// define structure from.
+    /// Creates a new [`Gob`] object.
     /// 
     /// # Examples
     /// 
@@ -224,8 +231,8 @@ impl Gob {
     /// 
     /// let gob = Gob::new();
     /// ```
-    pub fn new(files: Option<GobMap>) -> Self {
-        let files = files.unwrap_or(GobMap::new());
+    pub fn new() -> Self {
+        let files = GobMap::new();
 
         Self {
             files,
