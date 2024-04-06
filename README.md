@@ -10,16 +10,26 @@ A Rust library for parsing and constructing archives of the LucasArts GOB format
 use std::path::Path;
 use gob_rs::core::Gob;
 
-let gob = Gob::from_file(Path::new("/path/to/gob.GOB"))?;
+fn main() -> std::io::Result<()> {
+    let gob = Gob::from_file(Path::new("/path/to/gob.GOB"))?;
+
+    Ok(())
+}
 ```
 
-### Parsing GOB-Like Directory
+### Parsing GOB-Like* Directory
+
+*\*That is, a directory structured like a GOB archive.*
 
 ```rs
 use std::path::Path;
 use gob_rs::core::Gob;
 
-let gob = Gob::from_directory(Path::new("/path/to/gob/"))?;
+fn main() -> std::io::Result<()> {
+    let gob = Gob::from_directory(Path::new("/path/to/gob"))?;
+
+    Ok(())
+}
 ```
 
 ### Getting The File Count

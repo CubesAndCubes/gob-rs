@@ -1,3 +1,5 @@
+//! Core module of the library
+
 use std::{
     fs,
     io::{Error, ErrorKind, Read, Seek, SeekFrom},
@@ -15,27 +17,44 @@ use crate::byte;
 /// 
 /// Creates a new object from parsing a GOB file at a given [`Path`]:
 /// 
-/// ```
+/// ```no_run
 /// use std::path::Path;
 /// use gob_rs::core::Gob;
 /// 
-/// let gob = Gob::from_file(Path::new("/path/to/gob.GOB"))?;
+/// fn main() -> std::io::Result<()> {
+///     let gob = Gob::from_file(Path::new("/path/to/gob.GOB"))?;
+/// 
+///     Ok(())
+/// }
 /// ```
 /// 
 /// Creates a new object from parsing a directory, structured like
 /// a GOB archive, at a given [`Path`]:
 /// 
-/// ```
+/// ```no_run
 /// use std::path::Path;
 /// use gob_rs::core::Gob;
 /// 
-/// let gob = Gob::from_directory(Path::new("/path/to/gob"))?;
+/// fn main() -> std::io::Result<()> {
+///     let gob = Gob::from_directory(Path::new("/path/to/gob"))?;
+/// 
+///     Ok(())
+/// }
 /// ```
 /// 
 /// Gets the file count of the archive:
 /// 
-/// ```
-/// let file_count = gob.files.len();
+/// ```no_run
+/// use std::path::Path;
+/// use gob_rs::core::Gob;
+/// 
+/// fn main() -> std::io::Result<()> {
+///     let gob = Gob::from_file(Path::new("/path/to/gob.GOB"))?;
+/// 
+///     let file_count = gob.files.len();
+/// 
+///     Ok(())
+/// }
 /// ```
 /// 
 /// 
@@ -97,11 +116,15 @@ impl Gob {
     /// structured like a GOB archive.
     /// 
     /// # Examples
-    /// ```
+    /// ```no_run
     /// use std::path::Path;
     /// use gob_rs::core::Gob;
     /// 
-    /// let gob = Gob::from_directory(Path::new("/path/to/gob"))?;
+    /// fn main() -> std::io::Result<()> {
+    ///     let gob = Gob::from_directory(Path::new("/path/to/gob"))?;
+    /// 
+    ///     Ok(())
+    /// }
     /// ```
     pub fn from_directory(path: &Path) -> std::io::Result<Self> {
         if !path.is_dir() {
@@ -121,11 +144,15 @@ impl Gob {
     /// 
     /// # Examples
     /// 
-    /// ```
+    /// ```no_run
     /// use std::path::Path;
     /// use gob_rs::core::Gob;
     /// 
-    /// let gob = Gob::from_file(Path::new("/path/to/gob.GOB"))?;
+    /// fn main() -> std::io::Result<()> {
+    ///     let gob = Gob::from_file(Path::new("/path/to/gob.GOB"))?;
+    /// 
+    ///     Ok(())
+    /// }
     /// ```
     pub fn from_file(path: &Path) -> std::io::Result<Self> {
         if !path.is_file() {
@@ -213,28 +240,40 @@ struct FileDefinition {
 /// use std::path::PathBuf; 
 /// use gob_rs::core::File;
 /// 
-/// let archive_file = File::new(
-///     "GOB".as_bytes().to_vec(),
-///     PathBuf::from("foo.bar")
-/// )?;
+/// fn main() -> std::io::Result<()> {
+///     let archive_file = File::new(
+///         b"GOB".to_vec(),
+///         PathBuf::from("foo.bar")
+///     )?;
+/// 
+///     assert_eq!(archive_file.data, b"GOB");
+///     assert_eq!(archive_file.filepath, PathBuf::from("foo.bar"));
+/// 
+///     Ok(())
+/// }
 /// ```
 /// 
 /// Creating a GOB archive file from a real file:
 /// 
-/// ```
+/// ```no_run
+/// use std::io::Read;
 /// use std::path::PathBuf; 
 /// use gob_rs::core::File;
 /// 
-/// let mut real_file = fs::File::open(&path)?;
+/// fn main() -> std::io::Result<()> {
+///     let mut real_file = std::fs::File::open("/path/to/file")?;
+///
+///     let mut data: Vec<u8> = Vec::new();
 /// 
-/// let mut data: Vec<u8> = Vec::new();
+///     real_file.read_to_end(&mut data)?;
 /// 
-/// real_file.read_to_end(&mut data)?;
+///     let archive_file = File::new(
+///         data,
+///         PathBuf::from("foo.bar"),
+///     )?;
 /// 
-/// let archive_file = File::new(
-///     data,
-///     PathBuf::from("foo.bar"),
-/// )?;
+///     Ok(())
+/// }
 /// ```
 ///  
 /// # Limitations
@@ -252,6 +291,8 @@ pub struct File {
 
 impl File {
     /// Creates a new [`File`] object from a given [`Vec`] of [`u8`] (bytes)
+    /// and a given [`PathBuf`], representing the relative path to the file
+    /// within the archive.
     pub fn new(data: Vec<u8>, filepath: PathBuf) -> std::io::Result<Self> {
         if filepath.as_os_str().as_encoded_bytes().len() > 128 {
             return Err(Error::new(ErrorKind::InvalidInput, "File path is longer than 128 bytes."));
