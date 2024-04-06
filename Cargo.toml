@@ -6,5 +6,5 @@ keywords = ["gamedev", "lucasarts", "gob", "archive", "library"]
 categories = ["parser-implementations", "game-development"]
 readme = "crates-io.md"
 repository = "https://github.com/CubesAndCubes/gob-rs"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2021"
