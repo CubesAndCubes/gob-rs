@@ -212,10 +212,14 @@ impl Gob {
 
             let size = u32::from_le_bytes(byte::slice!(file, 4)) as usize;
 
-            let filepath = match byte::string_from_bytes(&byte::slice!(file, 128)) {
+            let filepath_bytes = byte::slice!(file, 128);
+
+            let filepath_end = filepath_bytes.iter().position(|&n| n == 0).unwrap_or(128);
+
+            let filepath = match byte::string_from_bytes(&filepath_bytes[..filepath_end]) {
                 Ok(filepath) => filepath,
                 Err(_) => {
-                    return Err(Error::new(ErrorKind::InvalidData, "Bad string encoding."));
+                    return Err(Error::new(ErrorKind::InvalidData, format!("Cannot convert following bytes to string: {filepath_bytes:?}")));
                 }
             };
 
