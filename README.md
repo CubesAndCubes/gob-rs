@@ -7,6 +7,8 @@ This implementation has been tested to work with GOB files of:
 - Indiana Jones and the Infernal Machine
 - Star Wars Jedi Knight: Dark Forces II
 
+For a GOB archiver/unarchiver using this library, see [gob-archive](https://github.com/CubesAndCubes/gob-archive).
+
 ## Examples
 
 ### Parsing GOB File
@@ -66,7 +68,7 @@ Body {
 File {
     offset: 4 bytes, // byte address where file data starts
     size: 4 bytes, // size of file data in bytes
-    filepath: 128 bytes, // path of file within archive
+    filepath: 128 bytes, // path of file within archive; null-terminated, may contain garbage data past terminator
 }
 ```
 
