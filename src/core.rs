@@ -164,6 +164,10 @@ impl Gob {
         Ok(Self { files })
     }
 
+    const SIGNATURE: &'static [u8; 4] = b"GOB ";
+
+    const VERSION: u32 = 0x14;
+
     /// Creates a new [`Gob`] object from a given [`Path`] to a GOB archive file.
     /// 
     /// # Examples
@@ -189,13 +193,13 @@ impl Gob {
 
         let signature = &byte::slice!(file, 4);
 
-        if signature != b"GOB " {
+        if signature != Self::SIGNATURE {
             return Err(Error::new(ErrorKind::InvalidData, "Bad signature in header of GOB file."));
         }
 
         let version = u32::from_le_bytes(byte::slice!(file, 4));
 
-        if version != 0x14 {
+        if version != Self::VERSION {
             return Err(Error::new(ErrorKind::InvalidData, "Bad version in header of GOB file."));
         }
 
