@@ -227,9 +227,7 @@ impl Gob {
                 }
             };
 
-            let filepath = PathBuf::from(
-                filepath.trim_matches(char::from(0))
-            );
+            let filepath = PathBuf::from(filepath);
 
             file_definitions.push(FileDefinition {
                 offset,
