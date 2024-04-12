@@ -1,6 +1,6 @@
 # gob-rs
 
-A Rust library for parsing and constructing archives of the LucasArts GOB format.
+A Rust library for parsing, constructing, and generating archives of the LucasArts GOB format.
 
 This implementation has been tested to work with GOB files of:
 
@@ -37,6 +37,27 @@ fn main() -> std::io::Result<()> {
 
     Ok(())
 }
+```
+
+### Generating GOB file data
+
+```rs
+use std::path::PathBuf;
+use gob_rs::core::Gob;
+
+let mut gob = Gob::new();
+
+gob.files.insert(
+    PathBuf::from("foo.bar"),
+    b"foobar".to_vec(),
+);
+
+gob.files.insert(
+    PathBuf::from("fizz.buzz"),
+    b"fizzbuzz".to_vec(),
+);
+
+let data = gob.as_bytes();
 ```
 
 ## Specification
