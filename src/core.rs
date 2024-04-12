@@ -164,6 +164,10 @@ impl Gob {
         Ok(Self { files })
     }
 
+    const SIGNATURE: &'static [u8; 4] = b"GOB ";
+
+    const VERSION: u32 = 0x14;
+
     /// Creates a new [`Gob`] object from a given [`Path`] to a GOB archive file.
     /// 
     /// # Examples
@@ -189,13 +193,13 @@ impl Gob {
 
         let signature = &byte::slice!(file, 4);
 
-        if signature != b"GOB " {
+        if signature != Self::SIGNATURE {
             return Err(Error::new(ErrorKind::InvalidData, "Bad signature in header of GOB file."));
         }
 
         let version = u32::from_le_bytes(byte::slice!(file, 4));
 
-        if version != 0x14 {
+        if version != Self::VERSION {
             return Err(Error::new(ErrorKind::InvalidData, "Bad version in header of GOB file."));
         }
 
@@ -223,9 +227,7 @@ impl Gob {
                 }
             };
 
-            let filepath = PathBuf::from(
-                filepath.trim_matches(char::from(0))
-            );
+            let filepath = PathBuf::from(filepath);
 
             file_definitions.push(FileDefinition {
                 offset,
@@ -247,6 +249,80 @@ impl Gob {
         }
 
         Ok(Self { files })
+    }
+
+    /// Generates the data (bytes) for a GOB file representing the current archive object.
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use std::path::PathBuf;
+    /// use gob_rs::core::Gob;
+    /// 
+    /// let mut gob = Gob::new();
+    /// 
+    /// gob.files.insert(
+    ///     PathBuf::from("foo.bar"),
+    ///     b"foobar".to_vec(),
+    /// );
+    /// 
+    /// gob.files.insert(
+    ///     PathBuf::from("fizz.buzz"),
+    ///     b"fizzbuzz".to_vec(),
+    /// );
+    /// 
+    /// let data = gob.as_bytes();
+    /// 
+    /// assert_eq!(&data[..4], Vec::from(b"GOB "));
+    /// 
+    /// assert_eq!(&data[4..8], Vec::from(0x14u32.to_le_bytes()));
+    /// 
+    /// assert_eq!(&data[8..12], Vec::from(12u32.to_le_bytes()));
+    /// 
+    /// assert_eq!(&data[12..16], Vec::from(2u32.to_le_bytes()));
+    /// ```
+    pub fn as_bytes(self) -> Result<Vec<u8>, String> {
+        let mut bytes: Vec<u8> = Vec::new();
+
+        bytes.extend(Self::SIGNATURE);
+
+        bytes.extend(&Self::VERSION.to_le_bytes());
+
+        let body_offset: u32 = 12;
+
+        bytes.extend(&body_offset.to_le_bytes());
+
+        let file_count = self.files.len() as u32;
+
+        bytes.extend(&file_count.to_le_bytes());
+
+        let mut file_data_offset: u32 = 16 + 136 * file_count;
+
+        for (filepath, file_data) in &self.files {
+            bytes.extend(&file_data_offset.to_le_bytes());
+
+            let size = file_data.len() as u32;
+
+            file_data_offset += size;
+
+            bytes.extend(&size.to_le_bytes());
+
+            let filepath_bytes = filepath.as_os_str().as_encoded_bytes();
+
+            if filepath_bytes.len() > 128 {
+                return Err(format!("Filepath is longer than 128 bytes: {}", filepath.display()))
+            }
+
+            bytes.extend(filepath_bytes);
+
+            bytes.extend(vec![0; 128 - filepath_bytes.len()]);
+        }
+
+        for (_, file_data) in &self.files {
+            bytes.extend(file_data);
+        }
+
+        Ok(bytes)
     }
 
     /// Creates a new [`Gob`] object.
