@@ -283,7 +283,7 @@ impl Gob {
     /// 
     /// assert_eq!(&data[12..16], Vec::from(2u32.to_le_bytes()));
     /// ```
-    pub fn as_bytes(self) -> Vec<u8> {
+    pub fn as_bytes(self) -> Result<Vec<u8>, String> {
         let mut bytes: Vec<u8> = Vec::new();
 
         bytes.extend(Self::SIGNATURE);
@@ -312,9 +312,7 @@ impl Gob {
             let filepath_bytes = filepath.as_os_str().as_encoded_bytes();
 
             if filepath_bytes.len() > 128 {
-                eprintln!("Filepath is longer than 128 bytes: {}", filepath.display());
-
-                std::process::exit(1);
+                return Err(format!("Filepath is longer than 128 bytes: {}", filepath.display()))
             }
 
             bytes.extend(filepath_bytes);
@@ -326,7 +324,7 @@ impl Gob {
             bytes.extend(file_data);
         }
 
-        bytes
+        Ok(bytes)
     }
 
     /// Creates a new [`Gob`] object.
