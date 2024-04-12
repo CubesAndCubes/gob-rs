@@ -2,7 +2,7 @@
 name = "gob_rs"
 description = "Library for parsing and constructing archives of the LucasArts GOB format."
 license = "MIT OR Apache-2.0"
-keywords = ["gamedev", "lucasarts", "gob", "archive", "library", "parser"]
+keywords = ["gamedev", "lucasarts", "gob", "archive", "library"]
 categories = ["parser-implementations", "game-development"]
 readme = "README.md"
 repository = "https://github.com/CubesAndCubes/gob-rs"
